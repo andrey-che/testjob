@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block body %}
+  <script>
+
+$(document).ready(function() {
+    $( "#id_date_joined" ).datepicker();
+    loadUsers();
+ });
+  </script>
+
+    <table border="0" width="800" align="center">
+    <tr>
+        <td width="25%" valign="top">
+            <ul>
+                <li><a href="#" onclick="loadUsers();">Пользователи</a></a></li>
+                <li><a href="#" onclick="loadRooms();">Комнаты</a></a></li>
+            </ul>
+        </td>
+        <td width="75%" valign="top">
+            <table width="98%" border="1" align="center" id="UsersTable" style="display:none">
+                <tr id="Title">
+                    <td>Имя</td>
+                    <td>Зарплата</td>
+                    <td>Дата поступления на работу</td>
+                </tr>
+            </table>
+
+            <form style="display:none" id="id_UsersForm" method="post">
+                <br>
+                <table border="0">
+                    {{ UsersForm }}
+                    <tr>
+                        <td></td>
+                        <td><br><a href="#" onclick="submitUsersForm();">Добавить</a></td>
+                    </tr>
+                </table>
+            </form>
+
+            <table width="98%" border="1" align="center" id="RoomsTable" style="display:none">
+                <tr id="Title">
+                    <td>Отдел</td>
+                    <td>Вместимость</td>
+                </tr>
+            </table>
+
+            <form style="display:none" id="id_RoomsForm" method="post">
+                <br>
+                <table border="0">
+                    {{ RoomsForm }}
+                    <tr>
+                        <td></td>
+                        <td><br><a href="#" onclick="submitRoomsForm();">Добавить</a></td>
+                    </tr>
+                </table>
+            </form>
+
+        </td>
+    </tr>
+    </table>
+{% endblock %}
