@@ -1,59 +1,45 @@
 {% extends "base.html" %}
 
 {% block body %}
-  <script>
 
-$(document).ready(function() {
-    $( "#id_date_joined" ).datepicker();
-    loadUsers();
- });
-  </script>
+    <script>
+        $(document).ready(function() {
+            $("[id*=id_date]").datepicker({dateFormat: 'yy-mm-dd'});
+        });
+    </script>
 
     <table border="0" width="800" align="center">
     <tr>
         <td width="25%" valign="top">
             <ul>
-                <li><a href="#" onclick="loadUsers();">Пользователи</a></a></li>
-                <li><a href="#" onclick="loadRooms();">Комнаты</a></a></li>
+                {% for key, value in modelList.items %}
+                    <li><a href="#" onclick="loadTable('{{ key }}');">{{ value.modelTitle }}</a></a></li>
+                {% endfor %}
             </ul>
         </td>
         <td width="75%" valign="top">
-            <table width="98%" border="1" align="center" id="UsersTable" style="display:none">
-                <tr id="Title">
-                    <td>Имя</td>
-                    <td>Зарплата</td>
-                    <td>Дата поступления на работу</td>
-                </tr>
-            </table>
 
-            <form style="display:none" id="id_UsersForm" method="post">
-                <br>
-                <table border="0">
-                    {{ UsersForm }}
-                    <tr>
-                        <td></td>
-                        <td><br><a href="#" onclick="submitUsersForm();">Добавить</a></td>
+            {% for key, value in modelList.items %}
+                <table width="98%" border="1" align="center" id="id_table_{{ key }}" class="data_table" style="display:none">
+                    <tr id="Title">
+                        {% for field in value.modelFields %}
+                            <!-- <td id="id_{{field.name}}">{{field.verbose_name}}</td> -->
+                            <td>{{field.verbose_name}}</td>
+                        {% endfor %}
                     </tr>
                 </table>
-            </form>
 
-            <table width="98%" border="1" align="center" id="RoomsTable" style="display:none">
-                <tr id="Title">
-                    <td>Отдел</td>
-                    <td>Вместимость</td>
-                </tr>
-            </table>
-
-            <form style="display:none" id="id_RoomsForm" method="post">
-                <br>
-                <table border="0">
-                    {{ RoomsForm }}
-                    <tr>
-                        <td></td>
-                        <td><br><a href="#" onclick="submitRoomsForm();">Добавить</a></td>
-                    </tr>
-                </table>
-            </form>
+                <form id="id_form_{{ key }}" method="post" class="data_form" model_name="{{ key }}" style="display:none">
+                    <br>
+                    <table border="0">
+                        {{ value.modelForm }}
+                        <tr>
+                            <td></td>
+                            <td><br><a href="#" onclick="submitForm('{{ key }}');">Добавить</a></td>
+                        </tr>
+                    </table>
+                </form>
+            {% endfor %}
 
         </td>
     </tr>

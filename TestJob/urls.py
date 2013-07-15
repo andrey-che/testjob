@@ -9,11 +9,8 @@ urlpatterns = patterns('',
 
 urlpatterns += patterns('main.views',
     (r'^$', 'main'),
-    (r'^xhr_getUsers/$','xhr_getUsers'),
-    (r'^xhr_getRooms/$','xhr_getRooms'),
-    (r'^xhr_postUsers/$','xhr_postUsers'),
-    (r'^xhr_editUsers/$','xhr_editUsers'),
-    (r'^xhr_editRooms/$','xhr_editRooms'),
-    (r'^xhr_postRooms/$','xhr_postRooms'),
-
+    (r'^xhr_postRow/$','xhr_postRow'),
+    (r'^xhr_getModel/$','xhr_getModel'),
+    (r'^xhr_editField/$','xhr_editField'),
 )
+

@@ -2,12 +2,12 @@
 from django.forms import ModelForm
 from main.models import dynModelList
 
+dynFormList = {}
 
-class UsersForm(ModelForm):
+for model in dynModelList:
     class Meta:
-        model = dynModelList['users']
+        model = dynModelList[model]
 
-
-class RoomsForm(ModelForm):
-    class Meta:
-        model = dynModelList['rooms']
+    formName = "modelForm_{}".format(model)
+    formData = {'Meta': Meta}
+    dynFormList[formName] = type(formName, (ModelForm,), formData)

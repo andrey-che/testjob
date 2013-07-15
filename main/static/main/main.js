@@ -1,16 +1,15 @@
-
-function attacheEditable() {
-
-    function saveValue(value, editField, url) {
+function attacheEditable(modelName) {
+    function saveValue(value, editField) {
         var editData = {}
         editData['value'] = value;
-        editData['pk'] = editField.parent().attr("pk");
-        editData['field_name'] = editField.attr("field_name");
+        editData['pk'] = editField.parent().find('td.pk').html();
+        editData['modelName'] = modelName;
+        editData['fieldName'] = editField.attr("field_name");
 
         // Пытаемся сохранить отредактированное
         $.ajax({
             type: "POST",
-            url: url,
+            url: "/xhr_editField/",
             data: editData,
 
             success: function(response){
@@ -33,86 +32,81 @@ function attacheEditable() {
     }
 
     // Обычное текстовое поле
-    $('.edit_users').editable(
+    $('.AnotherField').editable(
         function(value, settings) {
-            saveValue(value, $(this), "/xhr_editUsers/");
-            return(value);
-        }
-    );
-
-    // Обычное текстовое поле
-    $('.edit_rooms').editable(
-        function(value, settings) {
-            saveValue(value, $(this), "/xhr_editRooms/");
+            saveValue(value, $(this));
             return(value);
         }
     );
 
     // Календарь
-    $('.date_edit').editable(
+    $('.DateField').editable(
         function(value, settings){
-            saveValue(value, $(this), "/xhr_editUsers/");
+            saveValue(value, $(this));
             return(value);
         },
         {type: 'datepicker', datepicker: {dateFormat: 'yy-mm-dd'}}
     );
 }
 
-function loadUsers() {
-    // Прчем таблицу комнат и отображаем таблицу пользователей
-    $('#RoomsTable').hide()
-    $('#id_RoomsForm').hide()
-    $('#UsersTable').show()
-    $('#id_UsersForm').show()
 
+function loadTable(modelName) {
     // Очистка таблицы
-    $('*#dataTr').remove()
+    $('*#dataTr').remove();
 
-    // Загрузка таблицы
-    $.get('/xhr_getUsers/', function(data) {
-        data = $.parseJSON(data);
-        data = $.parseJSON(data)
+    // Прячем все таблицы
+    $('.data_table').hide();
+    $('.data_form').hide();
 
-        for(var i=0; i<data.length; i++)
-        {
-            $('#UsersTable tr:last').after('<tr id="dataTr" pk="'+data[i].pk+'"><td class="edit_users" field_name="name">'+data[i].fields.name+'</td><td class="edit_users" field_name="paycheck">'+data[i].fields.paycheck+'</td><td class="date_edit" field_name="date_joined">'+data[i].fields.date_joined+'</td></tr>');
-        }
+    // Показываем нужную таблицу
+    $('#id_table_'+modelName).show();
+    $('#id_form_'+modelName).show();
 
-        attacheEditable();
-    });
-}
-
-function loadRooms() {
-    // Прчем таблицу комнат и отображаем таблицу пользователей
-    $('#UsersTable').hide()
-    $('#id_UsersForm').hide()
-    $('#RoomsTable').show()
-    $('#id_RoomsForm').show()
-
-    // Очистка таблицы
-    $('*#dataTr').remove()
-
-    // Загрузка таблицы
-    $.get('/xhr_getRooms/', function(data) {
-        data = $.parseJSON(data);
-        data = $.parseJSON(data)
-
-        for(var i=0; i<data.length; i++)
-        {
-            $('#RoomsTable tr:last').after('<tr id="dataTr" pk="'+data[i].pk+'"><td class="edit_rooms" field_name="department">'+data[i].fields.department+'</td><td class="edit_rooms" field_name="spots">'+data[i].fields.spots+'</td></tr>');
-        }
-
-        attacheEditable();
-    });
-
-
-}
-
-function submitUsersForm() {
     $.ajax({
-        url:"/xhr_postUsers/",
+        type: "GET",
+        url: "/xhr_getModel/",
+        data: {"modelName": modelName},
+
+        success: function(response){
+            response = $.parseJSON(response);
+            //response = $.parseJSON(response);
+
+            var row = '';
+
+            // Генерация строки таблицы
+            for(var i=0; i<response.length; i++) {
+                row = '<tr id="dataTr">';
+
+                for(var j=0; j<response[i].length; j++) {
+                    // Чтобы к полю ID не прицеплялся editable
+                    if (response[i][j]['fieldName'] == 'id')
+                        var fieldType = 'pk'
+                    else
+                        var fieldType = response[i][j]['fieldType']
+
+                    row = row + '<td class="'+fieldType+'" field_name="'+response[i][j]['fieldName']+'">'+response[i][j]['value']+'</td>';
+                }
+
+                row = row + "</tr>";
+
+                $('#id_table_'+modelName+' tr:last').after(row);
+            }
+
+            attacheEditable(modelName);
+        }
+    });
+}
+
+
+function submitForm(modelName) {
+    // Формируем пост-запрос и добавляем в него имя модели
+    var data = $("#id_form_" + modelName).serialize();
+    data = data + "&__modelName__=" + modelName;
+
+    $.ajax({
+        url:"/xhr_postRow/",
         type: "POST",
-        data: $("#id_UsersForm").serialize(),
+        data: data,
 
         success:function(response){
             response = $.parseJSON(response);
@@ -126,46 +120,10 @@ function submitUsersForm() {
             }
             else if (response.result == true) {
                 // Очистка формы
-                $("#id_UsersForm").closest('form').find("input[type=text], textarea").val("");
+                $("#id_form_" + modelName).closest('form').find("input[type=text], textarea").val("");
 
-                // Добавление записи без перезагрузки
-                $('#UsersTable tr:last').after('<tr id="dataTr"><td>'+response.data.name+'</td><td>'+response.data.paycheck+'</td><td>'+response.data.date_joined+'</td></tr>');
-
-            }
-        },
-
-        complete:function(){},
-
-        error:function (xhr, textStatus, thrownError){
-            alert("Ошибка добавления: " + thrownError);
-        }
-    });
-}
-
-
-function submitRoomsForm() {
-    $.ajax({
-        url:"/xhr_postRooms/",
-        type: "POST",
-        data: $("#id_RoomsForm").serialize(),
-
-        success:function(response){
-            response = $.parseJSON(response);
-
-            if(response.result == false){
-                var msg = "";
-                for(var key in response.errors) {
-                    msg = msg + key + ": " + response.errors[key] + "\n"
-                }
-                alert(msg);
-            }
-            else if (response.result == true) {
-                // Очистка формы
-                $("#id_RoomsForm").closest('form').find("input[type=text], textarea").val("");
-
-                // Добавление записи без перезагрузки
-                $('#RoomsTable tr:last').after('<tr id="dataTr"><td>'+response.data.department+'</td><td>'+response.data.spots+'</td></tr>');
-
+                // Обновляем таблицу
+                loadTable(modelName);
             }
         },
 

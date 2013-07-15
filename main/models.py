@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import admin
 import yaml
 
+
 def generateModel(name, rawModel):
     class Meta:
         pass
