@@ -15,14 +15,11 @@ from django.db.models.fields import DateField
 
 def main(request):
     context = {}
-
-    context['UsersForm'] = UsersForm()
-    context['RoomsForm'] = RoomsForm()
-
     modelList = {}
+
     for modelName in dynModelList:
         modelData = {}
-        modelFormName = "modelForm_{}".format(modelName)
+        modelFormName = "modelForm_{0}".format(modelName)
         modelData = {"modelTitle": dynModelList[modelName]._meta.verbose_name.title(),
                      "modelFields": dynModelList[modelName]._meta.fields,
                      "modelForm": dynFormList[modelFormName]()
@@ -72,7 +69,7 @@ def xhr_getModel(request):
 def xhr_editField(request):
     resp = {}
     try:
-        formName = "modelForm_{}".format(request.POST['modelName'])
+        formName = "modelForm_{0}".format(request.POST['modelName'])
         pk = request.POST['pk']
         value = request.POST['value']
         fieldName = request.POST['fieldName']
@@ -122,7 +119,7 @@ def xhr_postRow(request):
     resp = {}
     try:
         modelName = request.POST['__modelName__']
-        formName = "modelForm_{}".format(modelName)
+        formName = "modelForm_{0}".format(modelName)
 
         form = dynFormList[formName]
     except KeyError:
