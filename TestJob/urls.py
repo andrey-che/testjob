@@ -12,5 +12,6 @@ urlpatterns += patterns('main.views',
     (r'^xhr_postRow/$','xhr_postRow'),
     (r'^xhr_getModel/$','xhr_getModel'),
     (r'^xhr_editField/$','xhr_editField'),
+    (r'^xhr_getLastRow/$','xhr_getLastRow'),
 )
 

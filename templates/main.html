@@ -30,6 +30,7 @@
                 </table>
 
                 <form id="id_form_{{ key }}" method="post" class="data_form" model_name="{{ key }}" style="display:none">
+                    {% csrf_token %}
                     <br>
                     <table border="0">
                         {{ value.modelForm }}

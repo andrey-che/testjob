@@ -11,10 +11,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.forms.models import model_to_dict
 from django.forms import ValidationError
 from django.db.models.fields import DateField
+from django.core.context_processors import csrf
 
 
 def main(request):
     context = {}
+    context.update(csrf(request))
     modelList = {}
 
     for modelName in dynModelList:
@@ -31,7 +33,22 @@ def main(request):
     return render_to_response('main.html', context)
 
 
-@csrf_exempt
+# Ф-ия формирует информацию об одной записи в БД, состоящую из списка полей, каждый элемент списка - словарь, в котором
+# имя поля, тип и значение
+def getItemInfo(item):
+    dictItem = model_to_dict(item)
+
+    tmpList = []
+    for field in item._meta.fields:
+        tmpDict = {}
+        tmpDict['fieldName'] = field.name
+        tmpDict['value'] = dictItem[field.name]
+        tmpDict['fieldType'] = "DateField" if type(field) == DateField else "AnotherField"
+        tmpList.append(tmpDict)
+
+    return tmpList
+
+
 def xhr_getModel(request):
     modelName = request.GET.get("modelName")
 
@@ -49,23 +66,28 @@ def xhr_getModel(request):
     # о поле (имя, значение, тип)
     data = []
     for obj in objsList:
-        dictObj = model_to_dict(obj)
-
-        tmpList = []
-        for field in obj._meta.fields:
-            tmpDict = {}
-            tmpDict['fieldName'] = field.name
-            tmpDict['value'] = dictObj[field.name]
-            tmpDict['fieldType'] = "DateField" if type(field) == DateField else "AnotherField"
-            tmpList.append(tmpDict)
-
+        tmpList = getItemInfo(obj)
         data.append(tmpList)
 
     data = json.dumps(data, cls=DjangoJSONEncoder)
     return HttpResponse(data)
 
 
-@csrf_exempt
+def xhr_getLastRow(request):
+    modelName = request.GET.get("modelName")
+
+    try:
+        lastItem = dynModelList[modelName].objects.latest('id')
+    except KeyError:
+        return HttpResponse("Something wrong")
+
+    tmpList = getItemInfo(lastItem)
+
+    data = json.dumps(tmpList, cls=DjangoJSONEncoder)
+    return HttpResponse(data)
+
+
+
 def xhr_editField(request):
     resp = {}
     try:
@@ -78,6 +100,9 @@ def xhr_editField(request):
         form = dynFormList[formName]
     except KeyError:
         return HttpResponse("Editing error")
+
+    if fieldName == 'id':
+        return HttpResponse("ID editing isn't allowed")
 
     # Загружаем данные редактируемого объекта
     try:
@@ -95,7 +120,6 @@ def xhr_editField(request):
         data[fieldName] = value
 
         formRes = form(data=data)
-
         if formRes.is_valid():
             resp['result'] = True
 
@@ -114,7 +138,6 @@ def xhr_editField(request):
     return HttpResponse(data)
 
 
-@csrf_exempt
 def xhr_postRow(request):
     resp = {}
     try:

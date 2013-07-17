@@ -5,6 +5,7 @@ function attacheEditable(modelName) {
         editData['pk'] = editField.parent().find('td.pk').html();
         editData['modelName'] = modelName;
         editData['fieldName'] = editField.attr("field_name");
+        editData['csrfmiddlewaretoken'] = $.cookie("csrftoken");
 
         // Пытаемся сохранить отредактированное
         $.ajax({
@@ -50,6 +51,25 @@ function attacheEditable(modelName) {
 }
 
 
+function generateRow(item) {
+    var row = '<tr id="dataTr">';
+
+    for(var j=0; j<item.length; j++) {
+        // Чтобы к полю ID не прицеплялся editable
+        if (item[j]['fieldName'] == 'id')
+            var fieldType = 'pk'
+        else
+            var fieldType = item[j]['fieldType']
+
+        row = row + '<td class="'+fieldType+'" field_name="'+item[j]['fieldName']+'">'+item[j]['value']+'</td>';
+    }
+
+    row = row + "</tr>";
+
+    return row;
+}
+
+
 function loadTable(modelName) {
     // Очистка таблицы
     $('*#dataTr').remove();
@@ -71,26 +91,30 @@ function loadTable(modelName) {
             response = $.parseJSON(response);
             //response = $.parseJSON(response);
 
-            var row = '';
-
             // Генерация строки таблицы
             for(var i=0; i<response.length; i++) {
-                row = '<tr id="dataTr">';
-
-                for(var j=0; j<response[i].length; j++) {
-                    // Чтобы к полю ID не прицеплялся editable
-                    if (response[i][j]['fieldName'] == 'id')
-                        var fieldType = 'pk'
-                    else
-                        var fieldType = response[i][j]['fieldType']
-
-                    row = row + '<td class="'+fieldType+'" field_name="'+response[i][j]['fieldName']+'">'+response[i][j]['value']+'</td>';
-                }
-
-                row = row + "</tr>";
+                var row = generateRow(response[i]);
 
                 $('#id_table_'+modelName+' tr:last').after(row);
             }
+
+            attacheEditable(modelName);
+        }
+    });
+}
+
+
+function addLastRow(modelName) {
+    $.ajax({
+        type: "GET",
+        url: "/xhr_getLastRow/",
+        data: {"modelName": modelName},
+
+        success: function(response){
+            response = $.parseJSON(response);
+            var row = generateRow(response);
+
+            $('#id_table_'+modelName+' tr:last').after(row);
 
             attacheEditable(modelName);
         }
@@ -102,6 +126,7 @@ function submitForm(modelName) {
     // Формируем пост-запрос и добавляем в него имя модели
     var data = $("#id_form_" + modelName).serialize();
     data = data + "&__modelName__=" + modelName;
+    //var dataArray = $("#id_form_" + modelName).serializeArray();
 
     $.ajax({
         url:"/xhr_postRow/",
@@ -123,7 +148,7 @@ function submitForm(modelName) {
                 $("#id_form_" + modelName).closest('form').find("input[type=text], textarea").val("");
 
                 // Обновляем таблицу
-                loadTable(modelName);
+                addLastRow(modelName);
             }
         },
 

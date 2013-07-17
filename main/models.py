@@ -34,12 +34,6 @@ def generateModel(name, rawModel):
 
     model = type(name, (models.Model,), fields)
 
-    # Registering admin panel
-    class Admin(admin.ModelAdmin):
-        list_display = fieldsList
-
-    admin.site.register(model, Admin)
-
     return model
 
 # Reading config
